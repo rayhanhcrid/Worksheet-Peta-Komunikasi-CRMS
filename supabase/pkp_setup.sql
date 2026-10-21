@@ -4,7 +4,7 @@
 -- (salted sha256 in pkp_admin_config, 8 wrong tries per IP in 15 min = 15 min block).
 -- The password itself is set separately so it never lands in this public repo.
 
-create table public.pkp_submissions (
+create table if not exists public.pkp_submissions (
   id uuid primary key default gen_random_uuid(),
   device_id text not null unique,
   nama text not null default '',
@@ -13,16 +13,16 @@ create table public.pkp_submissions (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-create index pkp_submissions_updated_idx on public.pkp_submissions (updated_at desc);
+create index if not exists pkp_submissions_updated_idx on public.pkp_submissions (updated_at desc);
 
-create table public.pkp_admin_config (
+create table if not exists public.pkp_admin_config (
   id smallint primary key default 1 check (id = 1),
   salt text not null,
   code_hash text not null,
   updated_at timestamptz not null default now()
 );
 
-create table public.pkp_admin_throttle (
+create table if not exists public.pkp_admin_throttle (
   ip text primary key,
   fails integer not null default 0,
   first_fail_at timestamptz not null default now(),

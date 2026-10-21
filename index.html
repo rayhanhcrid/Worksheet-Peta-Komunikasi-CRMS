@@ -57,6 +57,13 @@ h1 span{color:var(--blue)}
 .btn svg{flex:none}
 .confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--r2t);color:var(--ink);font-size:13.5px;font-weight:600}
 .saved{font-size:12.5px;color:var(--muted)}
+.btn[disabled]{opacity:.6;cursor:progress}
+.sendbar{margin-top:32px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;padding:20px 22px;border-radius:20px;background:var(--surface);border:2px dashed var(--blue)}
+.sendbar-text{min-width:0;flex:1 1 320px}
+.sendbar h2{margin:0 0 4px;font-family:var(--font-display);font-size:18px;font-weight:800}
+.send-status{margin:0;font-size:14px;color:var(--muted)}
+.send-status.ok{color:var(--r3);font-weight:600}
+.send-status.warn{color:var(--r2);font-weight:600}
 :focus-visible{outline:3px solid var(--orange);outline-offset:2px}
 
 /* column pills */
@@ -149,7 +156,7 @@ h1 span{color:var(--blue)}
   html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   :root{--shadow:none}
   body{background:#FFFFFF}
-  .tools,.picker,.toast,.cycle,.theme-btn{display:none!important}
+  .tools,.picker,.toast,.cycle,.theme-btn,.sendbar{display:none!important}
   .wrap{max-width:none;padding:0}
   .hero{margin-top:18px}
   .board{margin-top:20px;gap:20px}
@@ -186,7 +193,11 @@ h1 span{color:var(--blue)}
       <p class="lede">Kenali gaya komunikasimu, lalu petakan 3 rekan timmu supaya setiap respons terasa tepat dan berkelas.</p>
     </div>
     <div class="tools">
-      <button class="btn primary" id="pdfBtn" type="button">
+      <button class="btn primary js-send" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 10.5 13.5"></path><path d="M21 3 14.5 21l-4-7.5L3 9.5z"></path></svg>
+        <span>Kirim jawaban</span>
+      </button>
+      <button class="btn" id="pdfBtn" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M12 11v6M9 14l3 3 3-3"></path></svg>
         Simpan PDF
       </button>
@@ -298,6 +309,17 @@ h1 span{color:var(--blue)}
       </article>
     </section>
   </main>
+
+  <section class="sendbar" aria-labelledby="sendTitle">
+    <div class="sendbar-text">
+      <h2 id="sendTitle">Sudah selesai mengisi?</h2>
+      <p class="send-status" id="sendStatus" role="status"></p>
+    </div>
+    <button class="btn primary js-send" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 10.5 13.5"></path><path d="M21 3 14.5 21l-4-7.5L3 9.5z"></path></svg>
+      <span>Kirim jawaban</span>
+    </button>
+  </section>
 </div>
 
 <footer class="foot">
@@ -362,7 +384,11 @@ Array.prototype.forEach.call(inputs, function(el){
   el.parentNode.appendChild(pv); el.pv = pv;
   if (state.fields[el.id] != null) el.value = state.fields[el.id];
   pv.textContent = el.value;
-  el.addEventListener("input", function(){ state.fields[el.id] = el.value; pv.textContent = el.value; save(); });
+  el.addEventListener("input", function(){
+    state.fields[el.id] = el.value; pv.textContent = el.value;
+    if (state.sentAt && !state.dirty) { state.dirty = true; paintSend(); }
+    save();
+  });
 });
 
 var THEME_KEY = "hcr-peta-komunikasi-theme", root = document.documentElement, themeBtn = document.getElementById("themeBtn");
@@ -427,6 +453,45 @@ clearBtn.addEventListener("click", function(){ bar.hidden = false; clearBtn.hidd
 document.getElementById("confirmNo").addEventListener("click", function(){ bar.hidden = true; clearBtn.hidden = false; });
 document.getElementById("confirmYes").addEventListener("click", function(){
   Array.prototype.forEach.call(inputs, function(el){ el.value = ""; el.pv.textContent = ""; });
-  state.fields = {}; save(); bar.hidden = true; clearBtn.hidden = false; toast("Isian dikosongkan");
+  // A cleared sheet is treated as a new participant (shared devices), so the next send makes a new row.
+  state.fields = {}; state.sid = newSid(); state.sentAt = null; state.dirty = false; save(); paintSend();
+  bar.hidden = true; clearBtn.hidden = false; toast("Isian dikosongkan");
 });
+
+// Sending: one row per browser (state.sid) in Supabase "HCR Dashboard"; sending again updates that row.
+var SB_URL = "https://xapvrcotgffdcadambri.supabase.co", SB_KEY = "sb_publishable_dvo3rTleRQXo68w37D2glQ_4CS0-NZK";
+function newSid(){ try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {} return "s" + Date.now().toString(36) + Math.random().toString(36).slice(2, 12); }
+if (!state.sid) { state.sid = newSid(); save(); }
+var sendBtns = document.querySelectorAll(".js-send"), sendStatus = document.getElementById("sendStatus");
+function paintSend(){
+  var cls = "", msg = "Kirim jawabanmu ke fasilitator. Setelah terkirim, kamu masih bisa mengubah isian lalu kirim lagi.";
+  if (state.sentAt && state.dirty) { cls = " warn"; msg = "Ada perubahan yang belum dikirim. Klik Kirim jawaban lagi untuk memperbarui."; }
+  else if (state.sentAt) { cls = " ok"; msg = "Terkirim pukul " + new Date(state.sentAt).toLocaleTimeString("id-ID", {hour:"2-digit", minute:"2-digit"}) + ". Kalau ada perubahan, kirim lagi saja."; }
+  sendStatus.className = "send-status" + cls; sendStatus.textContent = msg;
+}
+function setSending(on){
+  Array.prototype.forEach.call(sendBtns, function(b){ b.disabled = on; b.querySelector("span").textContent = on ? "Mengirim…" : "Kirim jawaban"; });
+}
+function send(){
+  var nama = document.getElementById("me_nama");
+  if (!nama.value.trim()) { toast("Isi nama kamu dulu ya"); nama.focus(); return; }
+  var fields = {};
+  Array.prototype.forEach.call(inputs, function(el){ fields[el.id] = el.value; });
+  var ctrl = window.AbortController ? new AbortController() : null, timer = ctrl ? setTimeout(function(){ ctrl.abort(); }, 15000) : 0;
+  setSending(true);
+  fetch(SB_URL + "/rest/v1/rpc/pkp_submit", {
+    method: "POST", headers: {apikey: SB_KEY, "Content-Type": "application/json"}, signal: ctrl ? ctrl.signal : undefined,
+    body: JSON.stringify({p_device: state.sid, p_nama: nama.value, p_divisi: document.getElementById("me_divisi").value, p_payload: {fields: fields}})
+  }).then(function(r){
+    return r.json().then(function(j){ if (!r.ok) throw new Error("HTTP " + r.status); return j; });
+  }).then(function(j){
+    if (!j || !j.ok) { toast((j && j.error) || "Gagal mengirim. Coba lagi."); return; }
+    state.sentAt = j.at || new Date().toISOString(); state.dirty = false; save(); paintSend();
+    toast("Jawaban terkirim. Terima kasih!");
+  }).catch(function(){
+    toast("Gagal mengirim. Cek koneksi internet lalu coba lagi.");
+  }).then(function(){ clearTimeout(timer); setSending(false); });
+}
+Array.prototype.forEach.call(sendBtns, function(b){ b.addEventListener("click", send); });
+paintSend();
 </script>

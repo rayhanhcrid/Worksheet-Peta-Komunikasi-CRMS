@@ -1,0 +1,20 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "montserrat",
+        "createdAt": "2026-10-21T08:26:57.356Z",
+        "reason": "Existing HCR worksheet brand typography in index.html (predates this session); admin.html matches it"
+      },
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "createdAt": "2026-10-21T08:26:58.009Z",
+        "reason": "Existing HCR worksheet brand typography in index.html (predates this session); admin.html matches it"
+      }
+    ]
+  }
+}

@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="id">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Dashboard Admin · Peta Komunikasi Personal</title>
+<script>try { if (localStorage.getItem("hcr-peta-komunikasi-theme") === "dark") document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Admin view for the Peta Komunikasi worksheet: password gate, then a live list of submissions that expand into full answers. Tokens match index.html. */
+:root{
+  --bg:#F2F6FB; --surface:#FFFFFF; --surface-2:#E6EFF9; --ink:#0E2A47; --muted:#4A5D74; --line:#D3E0EE; --rule:#9FB4CA;
+  --blue:#0C6DBF; --blue-ink:#0A5799; --orange:#FFA200; --orange-2:#E8501C; --on-accent:#FFFFFF;
+  --r1:#0C6DBF; --r1t:#E3EFFA; --r2:#C2410C; --r2t:#FCEBDD; --r3:#4D7C28; --r3t:#E6F0DA;
+  --shadow:0 10px 26px rgba(12,59,110,.08);
+  --font-display:"Montserrat","Segoe UI",Arial,sans-serif;
+  --font-body:"Plus Jakarta Sans","Segoe UI",Arial,sans-serif;
+  color-scheme:light;
+}
+@media screen{:root[data-theme="dark"]{
+  --bg:#0B1626; --surface:#122339; --surface-2:#18304D; --ink:#E8EFF8; --muted:#A9B9CC; --line:#25415F; --rule:#4E6A88;
+  --blue:#5AAAF0; --blue-ink:#8CC4F5; --orange:#FFB23D; --orange-2:#FF7A45; --on-accent:#0B1626;
+  --r1:#5AAAF0; --r1t:#163452; --r2:#FF8A5B; --r2t:#3A2418; --r3:#8DC45F; --r3t:#1F3319;
+  --shadow:0 10px 26px rgba(0,0,0,.35); color-scheme:dark;
+}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding-block:24px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+
+.bar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand .mark{font-family:var(--font-display);font-weight:800;font-size:14px;letter-spacing:.04em;background:var(--blue);color:var(--on-accent);padding:7px 11px;border-radius:10px}
+.brand .sub{font-family:var(--font-display);font-weight:800;font-size:11.5px;letter-spacing:.12em;color:var(--muted)}
+.bar-end{display:flex;align-items:center;gap:8px}
+.btn{font:600 13.5px/1 var(--font-body);display:inline-flex;align-items:center;gap:8px;padding:11px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px;text-decoration:none}
+.btn:hover{border-color:var(--blue)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:var(--on-accent)}
+.btn.primary:hover{background:var(--blue-ink);border-color:var(--blue-ink)}
+.btn.danger{color:var(--r2);border-color:var(--r2)}
+.btn[disabled]{opacity:.6;cursor:progress}
+.btn svg{flex:none}
+.btn.icon{width:44px;padding:0;justify-content:center;border-radius:50%}
+.theme-btn .sun,:root[data-theme="dark"] .theme-btn .moon{display:none}
+:root[data-theme="dark"] .theme-btn .sun{display:block}
+
+/* login */
+.login{max-width:420px;margin:10vh auto 0;background:var(--surface);border:1.5px solid var(--line);border-radius:22px;padding:28px;box-shadow:var(--shadow)}
+.login h1{margin:0 0 6px;font-family:var(--font-display);font-size:24px;font-weight:800;line-height:1.15}
+.login p{margin:0 0 20px;color:var(--muted)}
+.login label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.login input{width:100%;font:500 16px/1.3 var(--font-body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:12px 14px;min-height:48px}
+.login input:focus{outline:none;border-color:var(--blue)}
+.login .btn{width:100%;justify-content:center;margin-top:12px;min-height:48px;font-size:15px}
+.err{margin:12px 0 0;color:var(--r2);font-weight:600;font-size:13.5px}
+.err:empty{display:none}
+
+/* dashboard */
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:28px}
+.title{margin:6px 0 0;font-family:var(--font-display);font-weight:800;font-size:clamp(26px,4vw,38px);line-height:1.05;letter-spacing:-.015em}
+.title span{color:var(--blue)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;flex:1 1 460px;max-width:620px}
+.search{position:relative;flex:1 1 220px;min-width:0}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search input{width:100%;font:500 14.5px/1.3 var(--font-body);color:var(--ink);background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px 11px 38px;min-height:44px}
+.search input:focus{outline:none;border-color:var(--blue)}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:22px}
+.stat{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px;min-width:0}
+.stat .k{font-size:12.5px;font-weight:700;color:var(--muted)}
+.stat .v{margin-top:2px;font-family:var(--font-display);font-weight:800;font-size:26px;line-height:1.2;font-variant-numeric:tabular-nums}
+.meta{margin:18px 2px 10px;font-size:12.5px;color:var(--muted)}
+
+.list{display:flex;flex-direction:column;gap:10px}
+.item{background:var(--surface);border:1.5px solid var(--line);border-radius:16px;min-width:0}
+.item[open]{border-color:var(--blue);box-shadow:var(--shadow)}
+.item summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.6fr) auto 18px;grid-template-areas:"who mates when chev";gap:6px 16px;align-items:center;padding:14px 16px;min-height:60px;border-radius:16px}
+.item summary::-webkit-details-marker{display:none}
+.who{grid-area:who;min-width:0}
+.who b,.who span,.mates{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who span{font-size:13px;color:var(--muted)}
+.mates{grid-area:mates;font-size:13.5px;color:var(--muted)}
+.when{grid-area:when;font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.chev{grid-area:chev;color:var(--muted);transition:transform .2s ease}
+.item[open] .chev{transform:rotate(180deg)}
+.body{display:flex;flex-direction:column;gap:14px;padding:16px;border-top:1.5px solid var(--line)}
+.sec h3{margin:0 0 10px;display:flex;align-items:center;gap:8px;font-family:var(--font-display);font-size:14.5px;font-weight:800;min-width:0}
+.sec h3 .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.saya{background:var(--surface-2);border-radius:14px;padding:14px 16px}
+.saya dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px 18px}
+.mates-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.mate{--c:var(--r1);border:1.5px solid var(--line);border-top:4px solid var(--c);border-radius:14px;padding:12px 14px;min-width:0}
+.mate.r2{--c:var(--r2)}
+.mate.r3{--c:var(--r3)}
+.num{width:28px;height:28px;flex:none;border-radius:9px;background:var(--c,var(--blue));color:var(--on-accent);font:800 12px/1 var(--font-display);display:inline-flex;align-items:center;justify-content:center}
+dl{margin:0;display:flex;flex-direction:column;gap:10px}
+dt{font-size:12px;font-weight:700;color:var(--muted)}
+dd{margin:2px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
+dd.none{color:var(--muted);font-style:italic}
+.item-actions{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-end;gap:8px}
+.confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--r2t);font-size:13.5px;font-weight:600}
+.empty{padding:48px 16px;text-align:center;color:var(--muted);background:var(--surface);border:1.5px dashed var(--line);border-radius:16px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:13.5px;box-shadow:var(--shadow);z-index:20;max-width:calc(100vw - 32px)}
+
+@media (max-width:900px){
+  .mates-grid,.saya dl{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .item summary{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"who when" "mates mates"}
+  .chev{display:none}
+  .search{flex-basis:100%}
+  .tools .btn{flex:1 1 0;justify-content:center}
+  .stat{padding:12px}
+  .stat .v{font-size:21px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@page{size:A4;margin:12mm}
+@media print{
+  html{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  :root{--shadow:none}
+  body{background:#FFFFFF}
+  .wrap{max-width:none;padding:0}
+  .bar,.tools,.stats,.meta,.item-actions,.toast,.chev{display:none!important}
+  .item{break-inside:avoid;border-color:var(--line)}
+  body.print-one .head{display:none}
+  body.print-one .item:not(.printing){display:none}
+  body.print-one .item.printing{border:0}
+  .mates-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .saya dl{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+</style>
+
+<div class="wrap">
+  <header class="bar">
+    <div class="brand"><span class="mark">HCR.ID</span><span class="sub">DASHBOARD ADMIN</span></div>
+    <div class="bar-end">
+      <button class="btn icon theme-btn" id="themeBtn" type="button" aria-label="Ganti ke mode gelap" title="Ganti ke mode gelap">
+        <svg class="moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7z"></path></svg>
+        <svg class="sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"></path></svg>
+      </button>
+      <button class="btn" id="logoutBtn" type="button" hidden>Keluar</button>
+    </div>
+  </header>
+
+  <section class="login" id="login" aria-labelledby="loginTitle">
+    <h1 id="loginTitle">Masuk dashboard admin</h1>
+    <p>Lihat jawaban Peta Komunikasi Personal yang sudah dikirim peserta.</p>
+    <form id="loginForm">
+      <label for="code">Password admin</label>
+      <input id="code" type="password" autocomplete="current-password" required>
+      <button class="btn primary" id="loginBtn" type="submit">Masuk</button>
+      <p class="err" id="loginErr" role="alert"></p>
+    </form>
+  </section>
+
+  <main id="dash" hidden>
+    <section class="head">
+      <h1 class="title">Peta Komunikasi <span>Personal</span></h1>
+      <div class="tools">
+        <label class="search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+          <input id="q" type="search" placeholder="Cari nama, divisi, rekan" aria-label="Cari peserta" autocomplete="off">
+        </label>
+        <button class="btn" id="refreshBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"></path></svg>
+          Muat ulang
+        </button>
+        <button class="btn primary" id="xlsxBtn" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5"></path><path d="M5 20h14"></path></svg>
+          Unduh Excel
+        </button>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Ringkasan">
+      <div class="stat"><div class="k">Total jawaban</div><div class="v" id="sTotal">0</div></div>
+      <div class="stat"><div class="k">Masuk hari ini</div><div class="v" id="sToday">0</div></div>
+      <div class="stat"><div class="k">Terakhir masuk</div><div class="v" id="sLast">–</div></div>
+    </section>
+
+    <p class="meta" id="meta" aria-live="polite"></p>
+    <div class="list" id="list"></div>
+    <p class="empty" id="empty" hidden></p>
+  </main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+var SB_URL = "https://xapvrcotgffdcadambri.supabase.co", SB_KEY = "sb_publishable_dvo3rTleRQXo68w37D2glQ_4CS0-NZK";
+var CODE_KEY = "pkp-admin-code", THEME_KEY = "hcr-peta-komunikasi-theme";
+var ME_FIELDS = [["me_gaya", "Gaya komunikasi"], ["me_nada", "Nada & bahasa tubuh"], ["me_motivasi", "Yang memotivasi"]];
+var MATE_FIELDS = [["gaya", "Gaya komunikasi"], ["nada", "Nada"], ["tubuh", "Bahasa tubuh"], ["tidak", "Yang paling tidak Dia sukai"], ["motivasi", "Yang memotivasi Dia"]];
+
+var $ = function(id){ return document.getElementById(id); };
+var root = document.documentElement, themeBtn = $("themeBtn");
+function paintTheme(){
+  var label = root.getAttribute("data-theme") === "dark" ? "Ganti ke mode terang" : "Ganti ke mode gelap";
+  themeBtn.setAttribute("aria-label", label); themeBtn.title = label;
+}
+themeBtn.addEventListener("click", function(){
+  var next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  root.setAttribute("data-theme", next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  paintTheme();
+});
+paintTheme();
+
+var toastEl = $("toast"), tt;
+function toast(msg){ toastEl.textContent = msg; toastEl.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ toastEl.hidden = true; }, 2600); }
+
+function rpc(name, args){
+  return fetch(SB_URL + "/rest/v1/rpc/" + name, {
+    method: "POST", headers: {apikey: SB_KEY, "Content-Type": "application/json"}, body: JSON.stringify(args)
+  }).then(function(r){
+    return r.json().then(function(j){ if (!r.ok) throw new Error("HTTP " + r.status); return j; });
+  });
+}
+// Participant text only ever goes in through textContent.
+function el(tag, cls, text){ var e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+function val(f, k){ return (f[k] || "").trim(); }
+function sameDay(a, b){ return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+function hhmm(d){ return d.toLocaleTimeString("id-ID", {hour: "2-digit", minute: "2-digit"}); }
+function fmtWhen(iso){
+  var d = new Date(iso);
+  return sameDay(d, new Date()) ? "Hari ini, " + hhmm(d) : d.toLocaleDateString("id-ID", {day: "numeric", month: "short", year: "numeric"}) + ", " + hhmm(d);
+}
+
+var code = null;
+try { code = sessionStorage.getItem(CODE_KEY); } catch (e) {}
+var rows = [], lastJson = "", openIds = {};
+
+function showDash(on){ $("login").hidden = on; $("dash").hidden = !on; $("logoutBtn").hidden = !on; }
+function logout(msg){
+  code = null; rows = []; lastJson = ""; openIds = {};
+  try { sessionStorage.removeItem(CODE_KEY); } catch (e) {}
+  $("list").textContent = ""; showDash(false);
+  $("loginErr").textContent = msg || ""; $("code").value = ""; $("code").focus();
+}
+$("logoutBtn").addEventListener("click", function(){ logout(); });
+
+$("loginForm").addEventListener("submit", function(e){
+  e.preventDefault();
+  var c = $("code").value, btn = $("loginBtn");
+  if (!c) return;
+  btn.disabled = true; btn.textContent = "Memeriksa…"; $("loginErr").textContent = "";
+  rpc("pkp_admin_list", {p_code: c}).then(function(j){
+    if (!j.ok) { $("loginErr").textContent = j.error || "Password salah."; return; }
+    code = c;
+    try { sessionStorage.setItem(CODE_KEY, c); } catch (e2) {}
+    showDash(true); apply(j);
+  }).catch(function(){
+    $("loginErr").textContent = "Tidak bisa terhubung ke server. Cek koneksi internet lalu coba lagi.";
+  }).then(function(){ btn.disabled = false; btn.textContent = "Masuk"; });
+});
+
+function load(manual){
+  if (!code) return;
+  var btn = $("refreshBtn");
+  if (manual) btn.disabled = true;
+  rpc("pkp_admin_list", {p_code: code}).then(function(j){
+    if (!j.ok) { logout(j.error); return; }
+    apply(j);
+    if (manual) toast("Data diperbarui");
+  }).catch(function(){
+    toast("Gagal memuat data. Cek koneksi internet.");
+  }).then(function(){ btn.disabled = false; });
+}
+
+function apply(j){
+  var json = JSON.stringify(j.rows || []);
+  $("meta").textContent = "Diperbarui " + new Date(j.at || Date.now()).toLocaleTimeString("id-ID") + " · otomatis setiap 30 detik";
+  if (json === lastJson) return;
+  lastJson = json; rows = j.rows || [];
+  render();
+}
+
+function matchText(r){
+  var f = (r.payload && r.payload.fields) || {};
+  return [r.nama, r.divisi, f.t1_nama, f.t2_nama, f.t3_nama].join(" ").toLowerCase();
+}
+
+function render(){
+  var now = new Date(), today = 0, last = null;
+  rows.forEach(function(r){
+    var d = new Date(r.updated_at);
+    if (sameDay(d, now)) today++;
+    if (!last || d > last) last = d;
+  });
+  $("sTotal").textContent = rows.length;
+  $("sToday").textContent = today;
+  $("sLast").textContent = last ? (sameDay(last, now) ? hhmm(last) : last.toLocaleDateString("id-ID", {day: "numeric", month: "short"})) : "–";
+
+  var q = $("q").value.trim().toLowerCase();
+  var shown = q ? rows.filter(function(r){ return matchText(r).indexOf(q) !== -1; }) : rows;
+  var list = $("list"), empty = $("empty");
+  list.textContent = "";
+  shown.forEach(function(r){ list.appendChild(item(r)); });
+  empty.hidden = shown.length > 0;
+  empty.textContent = rows.length ? "Tidak ada peserta yang cocok dengan pencarian." : "Belum ada jawaban masuk. Jawaban peserta akan muncul di sini otomatis.";
+}
+
+function answers(f, defs, prefix){
+  var dl = el("dl");
+  defs.forEach(function(d){
+    var v = val(f, prefix + d[0]), wrap = el("div");
+    wrap.appendChild(el("dt", null, d[1]));
+    wrap.appendChild(el("dd", v ? null : "none", v || "Belum diisi"));
+    dl.appendChild(wrap);
+  });
+  return dl;
+}
+
+function item(r){
+  var f = (r.payload && r.payload.fields) || {};
+  var d = el("details", "item"); d.open = !!openIds[r.id];
+  d.addEventListener("toggle", function(){ if (d.open) openIds[r.id] = true; else delete openIds[r.id]; });
+
+  var s = el("summary"), who = el("span", "who");
+  who.appendChild(el("b", null, r.nama || "Tanpa nama"));
+  who.appendChild(el("span", null, r.divisi || "Divisi belum diisi"));
+  var mates = [1, 2, 3].map(function(n){ return val(f, "t" + n + "_nama"); }).filter(Boolean);
+  s.appendChild(who);
+  s.appendChild(el("span", "mates", mates.length ? "Rekan: " + mates.join(", ") : "Rekan belum diisi"));
+  s.appendChild(el("span", "when", fmtWhen(r.updated_at)));
+  s.insertAdjacentHTML("beforeend", '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>');
+  d.appendChild(s);
+
+  var body = el("div", "body");
+  var saya = el("div", "sec saya"), h = el("h3");
+  h.appendChild(el("span", "name", "Saya · " + (r.nama || "Tanpa nama")));
+  saya.appendChild(h); saya.appendChild(answers(f, ME_FIELDS, ""));
+  body.appendChild(saya);
+
+  var grid = el("div", "mates-grid");
+  [1, 2, 3].forEach(function(n){
+    var m = el("div", "sec mate r" + n), mh = el("h3");
+    mh.appendChild(el("span", "num", "0" + n));
+    mh.appendChild(el("span", "name", val(f, "t" + n + "_nama") || "Rekan " + n));
+    m.appendChild(mh); m.appendChild(answers(f, MATE_FIELDS, "t" + n + "_"));
+    grid.appendChild(m);
+  });
+  body.appendChild(grid);
+
+  var actions = el("div", "item-actions");
+  var printBtn = el("button", "btn", "Cetak / PDF"); printBtn.type = "button";
+  var delBtn = el("button", "btn danger", "Hapus"); delBtn.type = "button";
+  var confirm = el("div", "confirm"); confirm.hidden = true;
+  confirm.appendChild(el("span", null, "Hapus jawaban " + (r.nama || "ini") + "?"));
+  var yes = el("button", "btn danger", "Ya, hapus"); yes.type = "button";
+  var no = el("button", "btn", "Batal"); no.type = "button";
+  confirm.appendChild(yes); confirm.appendChild(no);
+  actions.appendChild(printBtn); actions.appendChild(delBtn); actions.appendChild(confirm);
+  body.appendChild(actions);
+  d.appendChild(body);
+
+  printBtn.addEventListener("click", function(){ printOne(d, r); });
+  delBtn.addEventListener("click", function(){ confirm.hidden = false; delBtn.hidden = true; no.focus(); });
+  no.addEventListener("click", function(){ confirm.hidden = true; delBtn.hidden = false; });
+  yes.addEventListener("click", function(){
+    yes.disabled = true;
+    rpc("pkp_admin_delete", {p_code: code, p_id: r.id}).then(function(j){
+      if (!j.ok) { toast(j.error || "Gagal menghapus."); yes.disabled = false; return; }
+      rows = rows.filter(function(x){ return x.id !== r.id; });
+      lastJson = JSON.stringify(rows); delete openIds[r.id];
+      render(); toast("Jawaban dihapus");
+    }).catch(function(){ toast("Gagal menghapus. Cek koneksi internet."); yes.disabled = false; });
+  });
+  return d;
+}
+
+var baseTitle = document.title, printing = null;
+function printOne(d, r){
+  printing = {d: d, open: d.open};
+  d.open = true; d.classList.add("printing"); document.body.classList.add("print-one");
+  document.title = "Peta Komunikasi Personal - " + (r.nama || "Peserta");
+  window.print();
+}
+window.addEventListener("afterprint", function(){
+  if (!printing) return;
+  printing.d.open = printing.open; printing.d.classList.remove("printing");
+  document.body.classList.remove("print-one"); document.title = baseTitle; printing = null;
+});
+
+$("q").addEventListener("input", render);
+$("refreshBtn").addEventListener("click", function(){ load(true); });
+
+function exportTable(){
+  var head = ["Nama", "Divisi / Jabatan"].concat(ME_FIELDS.map(function(d){ return d[1] + " (saya)"; }));
+  [1, 2, 3].forEach(function(n){
+    head.push("Rekan " + n + " - Nama");
+    MATE_FIELDS.forEach(function(d){ head.push("Rekan " + n + " - " + d[1]); });
+  });
+  head.push("Terakhir dikirim");
+  var body = rows.map(function(r){
+    var f = (r.payload && r.payload.fields) || {};
+    var line = [r.nama || "", r.divisi || ""].concat(ME_FIELDS.map(function(d){ return val(f, d[0]); }));
+    [1, 2, 3].forEach(function(n){
+      line.push(val(f, "t" + n + "_nama"));
+      MATE_FIELDS.forEach(function(d){ line.push(val(f, "t" + n + "_" + d[0])); });
+    });
+    line.push(new Date(r.updated_at).toLocaleString("id-ID"));
+    return line;
+  });
+  return [head].concat(body);
+}
+function loadXlsx(){
+  if (window.XLSX) return Promise.resolve();
+  return new Promise(function(resolve, reject){
+    var s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = resolve; s.onerror = reject; document.head.appendChild(s);
+  });
+}
+function downloadCsv(aoa, name){
+  var csv = aoa.map(function(line){ return line.map(function(c){ return '"' + String(c).replace(/"/g, '""') + '"'; }).join(","); }).join("\r\n");
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob(["﻿" + csv], {type: "text/csv;charset=utf-8"}));
+  a.download = name + ".csv"; document.body.appendChild(a); a.click(); a.remove();
+}
+$("xlsxBtn").addEventListener("click", function(){
+  if (!rows.length) { toast("Belum ada jawaban untuk diunduh"); return; }
+  var btn = this, aoa = exportTable(), name = "peta-komunikasi-personal-" + new Date().toISOString().slice(0, 10);
+  btn.disabled = true;
+  loadXlsx().then(function(){
+    var ws = XLSX.utils.aoa_to_sheet(aoa), wb = XLSX.utils.book_new();
+    ws["!cols"] = aoa[0].map(function(h, i){ return {wch: i < 2 ? 22 : 32}; });
+    XLSX.utils.book_append_sheet(wb, ws, "Jawaban");
+    XLSX.writeFile(wb, name + ".xlsx");
+  }).catch(function(){
+    downloadCsv(aoa, name); toast("Excel tidak bisa dimuat, diunduh sebagai CSV");
+  }).then(function(){ btn.disabled = false; });
+});
+
+setInterval(function(){
+  if (!code || document.visibilityState !== "visible" || printing) return;
+  if (document.querySelector(".item .confirm:not([hidden])")) return;
+  load(false);
+}, 30000);
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible") load(false); });
+
+if (code) { showDash(true); $("meta").textContent = "Memuat…"; load(false); }
+else { $("code").focus(); }
+</script>
